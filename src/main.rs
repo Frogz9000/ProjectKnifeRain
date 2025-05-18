@@ -1,57 +1,41 @@
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
-fn main(){
+fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_systems(Startup, (add_people,add_pets))
-        .add_systems(Update,(hello_world,(update_people,greet_people).chain(),greet_pets))
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugins(RapierDebugRenderPlugin::default())
+        .add_systems(Startup, setup_graphics)
+        .add_systems(Startup, setup_physics)
+        .add_systems(Update, print_ball_altitude)
         .run();
 }
 
-fn hello_world() {
-    println!("hello world!");
+fn setup_graphics(mut commands: Commands) {
+    // Add a camera so we can see the debug-render.
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(-3.0, 3.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 }
 
-#[derive(Component)]
-struct Person;
-#[derive(Component)]
-struct Name(String);
-#[derive(Component)]
-struct Pet;
+fn setup_physics(mut commands: Commands) {
+    /* Create the ground. */
+    commands
+        .spawn(Collider::cuboid(100.0, 0.1, 100.0))
+        .insert(Transform::from_xyz(0.0, -2.0, 0.0));
 
-fn add_people(mut commands: Commands){
-    commands.spawn((Person, Name("Steve".to_string())));
-    commands.spawn((Person, Name("Bob".to_string())));
-    commands.spawn((Person, Name("Nicky".to_string())));
-    commands.spawn((Person, Name("Hailey".to_string())));
+    /* Create the bouncing ball. */
+    commands
+        .spawn(RigidBody::Dynamic)
+        .insert(Collider::ball(0.5))
+        .insert(Restitution::coefficient(0.7))
+        .insert(Transform::from_xyz(0.0, 4.0, 0.0));
 }
 
-fn add_pets(mut commands: Commands){
-    commands.spawn((Pet, Name("Spot".to_string())));
-    commands.spawn((Pet, Name("Ham".to_string())));
-    commands.spawn((Pet, Name("Brutus".to_string())));
-    commands.spawn((Pet, Name("Milo".to_string())));
-}
-
-fn greet_people(query: Query<&Name, With<Person>>){
-    for name in &query {
-        println!("Hello {}!",name.0);
-    }
-}
-fn greet_pets(query: Query<&Name, Without<Person>>){
-    print!("You must be the pets: ");
-    for name in &query {
-        print!(" {} ",name.0)
-    }
-    println!();
-}
-
-fn update_people(mut query: Query<&mut Name, With<Person>>){
-    for mut name in &mut query{
-        if name.0 == "Steve"{
-            println!("Steve has transitioned!");
-            name.0 = "Stevie".to_string();
-            break;
-        }
+fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
+    for transform in positions.iter() {
+        println!("Ball altitude: {}", transform.translation.y);
     }
 }
