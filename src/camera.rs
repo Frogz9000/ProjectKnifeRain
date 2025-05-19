@@ -1,4 +1,4 @@
-use bevy::window::{CursorGrabMode, PrimaryWindow};
+use bevy::{math::VectorSpace, window::{CursorGrabMode, PrimaryWindow}};
 use std::f32::consts::FRAC_PI_2;
 use bevy::{
     input::{ mouse::AccumulatedMouseMotion}, prelude::*, render::view::RenderLayers
@@ -10,7 +10,7 @@ impl Plugin for CameraControls{
         app.add_systems(Startup,(
             setup_camera,
         ));
-        app.add_systems(Update,(update_camera_mouse_event,update_pov,grab_mouse));
+        app.add_systems(Update,(update_camera_mouse_event,update_camera_keyboard_event,update_pov,grab_mouse));
     }
 }
 
@@ -81,6 +81,32 @@ fn update_camera_mouse_event(
         let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
         transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)
     }
+}
+
+fn update_camera_keyboard_event(
+    camera: Single<&mut Transform, With<PlayerCamera>>,
+    input: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>
+){
+    let mut transform = camera.into_inner();
+    let mut movement = Vec3::ZERO;
+    let speed = 4.0; //player speed modifier, add query var for this later, maybe item?
+    if input.pressed(KeyCode::KeyW){
+        movement.z += 1.0;
+    }
+    if input.pressed(KeyCode::KeyS){
+        movement.z -= 1.0;
+    }
+    if input.pressed(KeyCode::KeyA){
+        movement.x -= 1.0;
+    }
+    if input.pressed(KeyCode::KeyD){
+        movement.x += 1.0;
+    }
+    let forward = transform.forward();
+    let right = transform.right();
+    let movement_relative = (right* movement.x + forward * movement.z).normalize_or_zero();
+    transform.translation += movement_relative*speed*time.delta_secs();
 }
 //for now FOV will be controlled with up/down arrow keys for development
 fn update_pov(
