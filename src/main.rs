@@ -26,22 +26,15 @@ fn setup_test_level(
     //spawn in ground layer; 50x50 meter
     for i in 0..49{
         for j in 0..=49{
-            //TODO apply basic gpraphic to these colliders with PBR
-            //Have each row or coulmn have a unique color to better understand map positioning
-            //I want to see the coordinate plane
-            //spawn in colliders 
-            commands
-            .spawn(Collider::cuboid(0.5, 0.5, 0.5))
-            .insert(Transform::from_xyz(i as f32, 0.0, j as f32));
-            //spawn visual block for each
             commands.spawn((
                 Mesh3d(mesh_handle.clone()),
                 MeshMaterial3d(materials.add(StandardMaterial{
                         base_color: Color::LinearRgba(LinearRgba { red: random_color(), green: random_color(), blue: random_color(), alpha: 1.0 }),
                         ..Default::default()
-                }
-            )),
-            Transform::from_xyz(i as f32, 0.0, j as f32)));
+                })),
+                Transform::from_xyz(i as f32, -1.0, j as f32),
+                Collider::cuboid(0.5, 0.5, 0.5),
+                RigidBody::Fixed,));
         };
     }
 }

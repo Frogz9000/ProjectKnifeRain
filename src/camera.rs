@@ -1,4 +1,4 @@
-use bevy::{math::VectorSpace, window::{CursorGrabMode, PrimaryWindow}};
+use bevy::window::CursorGrabMode;
 use std::f32::consts::FRAC_PI_2;
 use bevy::{
     input::{ mouse::AccumulatedMouseMotion}, prelude::*, render::view::RenderLayers
@@ -15,6 +15,8 @@ impl Plugin for CameraControls{
 }
 
 #[derive(Component)]
+struct PlayerBody;
+#[derive(Component)]
 struct PlayerCamera;
 #[derive(Component, Deref, DerefMut)]
 struct CameraSensitivity(Vec2);
@@ -26,16 +28,14 @@ impl Default for CameraSensitivity {
 #[derive(Component)]
 struct WorldCamera;
 
-const DEFAULT_RENDER_LAYER: usize = 0;
 const VIEWMODEL_RENDER_LAYER: usize = 1;
-
 fn setup_camera(
     mut commands: Commands
 ){
    commands.spawn((
         PlayerCamera,
         CameraSensitivity::default(),
-        Transform::from_xyz(25.0,1.0,25.0),
+        Transform::from_xyz(25.0,2.0,25.0),
         Visibility::default(),
    )).with_children(|parent| {
     //spawn world camera as child: mut fov 90 
