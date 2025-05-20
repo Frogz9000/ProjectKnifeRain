@@ -1,19 +1,18 @@
-use bevy::prelude::*;
+use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 use bevy_rapier3d::prelude::*;
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use rand::Rng;
+mod player;
 mod camera;
-use camera::CameraControls;
+use player::PlayerPlugin;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
-        .add_plugins(CameraControls)
+        .add_plugins(PlayerPlugin)
         .add_systems(Startup, setup_test_level)
         .run();
-    
 }
 
 fn setup_test_level(

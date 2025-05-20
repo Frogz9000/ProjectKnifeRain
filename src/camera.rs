@@ -1,7 +1,8 @@
 use bevy::window::CursorGrabMode;
 use std::f32::consts::FRAC_PI_2;
+use crate::player::*;
 use bevy::{
-    input::{ mouse::AccumulatedMouseMotion}, prelude::*, render::view::RenderLayers
+    prelude::*, render::view::RenderLayers
 };
 
 pub struct CameraControls;
@@ -10,32 +11,22 @@ impl Plugin for CameraControls{
         app.add_systems(Startup,(
             setup_camera,
         ));
-        app.add_systems(Update,(update_camera_mouse_event,update_camera_keyboard_event,update_pov,grab_mouse));
+        app.add_systems(Update,(update_pov,grab_mouse));
     }
 }
-
 #[derive(Component)]
-struct PlayerBody;
-#[derive(Component)]
-struct PlayerCamera;
-#[derive(Component, Deref, DerefMut)]
-struct CameraSensitivity(Vec2);
-impl Default for CameraSensitivity {
-    fn default() -> Self {
-        Self(Vec2::new(0.003, 0.002))//arbitrary value, add settings controller later
-    }
-}
+pub struct PlayerCamera;
 #[derive(Component)]
 struct WorldCamera;
 
 const VIEWMODEL_RENDER_LAYER: usize = 1;
+
 fn setup_camera(
     mut commands: Commands
 ){
    commands.spawn((
         PlayerCamera,
-        CameraSensitivity::default(),
-        Transform::from_xyz(25.0,2.0,25.0),
+        Transform::from_xyz(25.0,CAMERA_OFFSET_Y,25.0+CAMERA_OFFSET_Z),
         Visibility::default(),
    )).with_children(|parent| {
     //spawn world camera as child: mut fov 90 
@@ -64,50 +55,6 @@ fn setup_camera(
    });
 }
 
-fn update_camera_mouse_event(
-    accum_mouse_motion: Res<AccumulatedMouseMotion>,
-    camera: Single<(&mut Transform, &CameraSensitivity), With<PlayerCamera>>
-){
-    let (mut transform, camera_sensitivity) = camera.into_inner();
-    let delta = accum_mouse_motion.delta;
-    if delta != Vec2::ZERO{ //if there was net mouse movement
-        let delta_yaw = -delta.x * camera_sensitivity.x;
-        let delta_pitch = -delta.y * camera_sensitivity.y;
-
-        let (yaw,pitch,roll) = transform.rotation.to_euler(EulerRot::YXZ);
-        let yaw = yaw + delta_yaw;
-        //prevent camera from going fully up or down to prevent ambiguity of what forward is/reversing yaw
-        const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
-        let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
-        transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)
-    }
-}
-
-fn update_camera_keyboard_event(
-    camera: Single<&mut Transform, With<PlayerCamera>>,
-    input: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>
-){
-    let mut transform = camera.into_inner();
-    let mut movement = Vec3::ZERO;
-    let speed = 4.0; //player speed modifier, add query var for this later, maybe item?
-    if input.pressed(KeyCode::KeyW){
-        movement.z += 1.0;
-    }
-    if input.pressed(KeyCode::KeyS){
-        movement.z -= 1.0;
-    }
-    if input.pressed(KeyCode::KeyA){
-        movement.x -= 1.0;
-    }
-    if input.pressed(KeyCode::KeyD){
-        movement.x += 1.0;
-    }
-    let forward = transform.forward();
-    let right = transform.right();
-    let movement_relative = (right* movement.x + forward * movement.z).normalize_or_zero();
-    transform.translation += movement_relative*speed*time.delta_secs();
-}
 //for now FOV will be controlled with up/down arrow keys for development
 fn update_pov(
     input: Res<ButtonInput<KeyCode>>,
