@@ -1,8 +1,6 @@
-use bevy::{math::VectorSpace, window::CursorGrabMode};
-use bevy_rapier3d::prelude::{Collider, KinematicCharacterController, RigidBody, Velocity};
-use std::f32::consts::FRAC_PI_2;
+use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use bevy::{
-    input::{ mouse::AccumulatedMouseMotion}, prelude::*, render::view::RenderLayers
+    input::{ mouse::AccumulatedMouseMotion}, prelude::*
 };
 use crate::camera::*;
 
@@ -15,6 +13,7 @@ impl Plugin for PlayerPlugin{
         app.add_systems(Update,(
             update_player_keyboard_event,
             update_player_mouse_event,
+            sync_player_camera_pos
         ));
         app.add_plugins(CameraControls);
     }
@@ -50,42 +49,55 @@ fn setup_player(
         Speed(4.0),
         CameraSensitivity::default(),
         RigidBody::Dynamic,
-        Collider::cuboid(0.5, 0.5, 0.5),//default player hitbox for now
+        Collider::capsule_y(0.5, 0.3),//default player hitbox for now
+        LockedAxes::ROTATION_LOCKED,//prevent physics induced rotation, manual rotation done from input
         Transform::from_xyz(25.0, 1.0, 25.0),
         PlayerPosition(Vec3 { x: (25.0), y: (1.0), z: (25.0) }),
         PlayerLookAngles{yaw:0.0,pitch:0.0},
+        Velocity::zero(),
     ));
 }
 
 fn update_player_keyboard_event(
-    mut player: Query<(&Speed,&mut Transform, &mut PlayerPosition), With<Player>>,
+    mut player: Query<(&Speed,&mut Velocity), With<Player>>,
+    camera: Query<&Transform,With<PlayerCamera>>,
     input: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>
+    time: Res<Time>,
 ){
-    let (speed, mut transform, mut pos) = player.single_mut().unwrap();
-    let mut movement = Vec3::ZERO;
+    let (speed, mut velocity) = player.single_mut().unwrap();
+    let camera_transform = camera.single().unwrap();
+    let mut direction = Vec3::ZERO;
+
+    // Get camera forward/right, then flatten them (Y = 0)
+    let forward = camera_transform.forward().normalize();
+    let right = camera_transform.right().normalize();
+    let forward_flat = Vec3::new(forward.x, 0.0, forward.z).normalize_or_zero();
+    let right_flat = Vec3::new(right.x, 0.0, right.z).normalize_or_zero();
+
     if input.pressed(KeyCode::KeyW){
-        movement.z += 1.0;
+        direction += forward_flat;
     }
     if input.pressed(KeyCode::KeyS){
-        movement.z -= 1.0;
+        direction -= forward_flat;
     }
     if input.pressed(KeyCode::KeyA){
-        movement.x -= 1.0;
+        direction -= right_flat;
     }
     if input.pressed(KeyCode::KeyD){
-        movement.x += 1.0;
+        direction += right_flat;
     }
-    //let rot = Quat::from_rotation_y(yaw.0);
-    //let angled_move = rot * movement.normalize_or_zero();
-    //velocity.linvel.x = angled_move.x * speed.0;
-    //velocity.linvel.z  =angled_move.z * speed.0;
+    velocity.linvel = Vec3::new(
+        direction.x * speed.0 * time.delta_secs(),
+        velocity.linvel.y,
+        direction.z * speed.0 * time.delta_secs(),
+    )
+}
 
-    let forward = transform.forward();
-    let right = transform.right();
-    let movement_relative = (right* movement.x + forward * movement.z).normalize_or_zero();
-    transform.translation += movement_relative*speed.0*time.delta_secs();
-    pos.0 = transform.translation;
+fn sync_player_camera_pos(
+    mut query: Query<(&Transform, &mut PlayerPosition), With<Player>>,
+){
+    let (transform, mut pos) = query.single_mut().unwrap();
+    pos.0 = transform.translation;//update position value for camera
 }
 
 fn update_player_mouse_event(
@@ -97,15 +109,13 @@ fn update_player_mouse_event(
     if delta != Vec2::ZERO{ //if there was net mouse movement
         let delta_yaw = -delta.x * camera_sensitivity.x;
         let delta_pitch = -delta.y * camera_sensitivity.y;
-
         let (yaw,pitch,roll) = transform.rotation.to_euler(EulerRot::YXZ);
         let update_yaw = yaw+delta_yaw;
-        //prevent camera from going fully up or down to prevent ambiguity of what forward is/reversing yaw
-        const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
-        let update_pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
         transform.rotation = Quat::from_euler(EulerRot::YXZ, update_yaw, pitch, roll);//apply yaw change to hitbox
         //store camera changes to struct
-        look_angle.pitch = update_pitch;
+        look_angle.pitch = delta_pitch;//pass delta and let camera apply pitch change so player does not tip over
         look_angle.yaw = update_yaw;
+    }else{
+        look_angle.pitch = 0.0;
     }
 }
