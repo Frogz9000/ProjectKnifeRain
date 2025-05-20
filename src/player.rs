@@ -25,9 +25,6 @@ impl Plugin for PlayerPlugin{
 }
 #[derive(Component)]
 pub struct Player;
-//create public struct components to share between camera and player 
-#[derive(Component)]
-pub struct PlayerPosition(pub Vec3);
 #[derive(Component)]
 pub struct PlayerLookAngles{
     pub pitch: f32,

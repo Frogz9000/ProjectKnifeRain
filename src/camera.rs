@@ -1,5 +1,4 @@
 use bevy::window::CursorGrabMode;
-use std::f32::consts::FRAC_PI_2;
 use crate::player::*;
 use bevy::{
     prelude::*, render::view::RenderLayers
