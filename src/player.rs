@@ -52,7 +52,6 @@ fn setup_player(
         Collider::capsule_y(0.5, 0.3),//default player hitbox for now
         LockedAxes::ROTATION_LOCKED,//prevent physics induced rotation, manual rotation done from input
         Transform::from_xyz(25.0, 1.0, 25.0),
-        PlayerPosition(Vec3 { x: (25.0), y: (1.0), z: (25.0) }),
         PlayerLookAngles{yaw:0.0,pitch:0.0},
         Velocity::zero(),
     ));
