@@ -11,7 +11,7 @@ impl Plugin for CameraControls{
         app.add_systems(Startup,(
             setup_camera,
         ));
-        app.add_systems(Update,(update_camera,update_pov,grab_mouse));
+        app.add_systems(Update,(update_pov,grab_mouse));
     }
 }
 #[derive(Component)]
@@ -20,8 +20,7 @@ pub struct PlayerCamera;
 struct WorldCamera;
 
 const VIEWMODEL_RENDER_LAYER: usize = 1;
-const CAMERA_OFFSET_Z: f32 = 0.0;//apply to camera to lag behind hitbox for debug, set to 0 for first person
-const CAMERA_OFFSET_Y: f32 = 0.5;//height offset to have camera at a certain level of player hitbox, not bottom of hitbox
+
 fn setup_camera(
     mut commands: Commands
 ){
@@ -54,25 +53,6 @@ fn setup_camera(
     ));
     //Add parent.spawn viewmodel when ready
    });
-}
-
-//instead of having camera controls have the camera react to the player
-fn update_camera(
-    player: Query<(&PlayerPosition,&PlayerLookAngles),With<Player>>,
-    mut camera: Query<&mut Transform, With<PlayerCamera>>,
-){
-    let (position_vec, angles_struct) = player.single().unwrap();
-    let mut transform = camera.single_mut().unwrap();
-    let mut camera_offset_position = position_vec.0;
-    camera_offset_position.z += CAMERA_OFFSET_Z;
-    camera_offset_position.y += CAMERA_OFFSET_Y;
-    transform.translation = camera_offset_position;
-    //
-    let (_,current_pitch,_) = transform.rotation.to_euler(EulerRot::YXZ);
-    //prevent camera from going fully up or down to prevent ambiguity of what forward is/reversing yaw
-    const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
-    let update_pitch = (current_pitch + angles_struct.pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
-    transform.rotation = Quat::from_euler(EulerRot::YXZ, angles_struct.yaw, update_pitch, 0.0);
 }
 
 //for now FOV will be controlled with up/down arrow keys for development

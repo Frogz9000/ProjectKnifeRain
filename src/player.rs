@@ -1,4 +1,6 @@
-use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
+use std::f32::consts::FRAC_PI_2;
+
+use bevy_rapier3d::{plugin::PhysicsSet, prelude::{Collider, LockedAxes, RigidBody, Velocity}};
 use bevy::{
     input::{ mouse::AccumulatedMouseMotion}, prelude::*
 };
@@ -7,6 +9,7 @@ use crate::camera::*;
 pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin{
     fn build(&self, app: &mut App){
+        app.add_plugins(CameraControls);
         app.add_systems(Startup,(
             setup_player,
         ));
@@ -15,7 +18,9 @@ impl Plugin for PlayerPlugin{
             update_player_mouse_event,
             sync_player_camera_pos
         ));
-        app.add_plugins(CameraControls);
+        app.add_systems(PostUpdate, 
+            sync_player_camera_pos
+                .after(PhysicsSet::SyncBackend));
     }
 }
 #[derive(Component)]
@@ -93,11 +98,21 @@ fn update_player_keyboard_event(
     )
 }
 
+pub const CAMERA_OFFSET_Z: f32 = 0.0;//apply to camera to lag behind hitbox for debug, set to 0 for first person
+pub const CAMERA_OFFSET_Y: f32 = 0.5;//height offset to have camera at a certain level of player hitbox, not bottom of hitbox
 fn sync_player_camera_pos(
-    mut query: Query<(&Transform, &mut PlayerPosition), With<Player>>,
+    mut camera: Query<&mut Transform, With<PlayerCamera>>,
+    player: Query<(&Transform,&PlayerLookAngles),(With<Player>,Without<PlayerCamera>)>,
 ){
-    let (transform, mut pos) = query.single_mut().unwrap();
-    pos.0 = transform.translation;//update position value for camera
+    let (player_transform, lookangle) = player.single().unwrap();
+    let mut camera_transform = camera.single_mut().unwrap();
+
+    camera_transform.translation = player_transform.translation+Vec3::new(0.0, CAMERA_OFFSET_Y, CAMERA_OFFSET_Z);
+    let (_,current_pitch,_) = camera_transform.rotation.to_euler(EulerRot::YXZ);
+    //prevent camera from going fully up or down to prevent ambiguity of what forward is/reversing yaw
+    const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
+    let update_pitch = (current_pitch + lookangle.pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+    camera_transform.rotation = Quat::from_euler(EulerRot::YXZ, lookangle.yaw, update_pitch, 0.0);
 }
 
 fn update_player_mouse_event(
