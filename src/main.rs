@@ -13,7 +13,6 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .add_systems(Startup, setup_test_level)
         .run();
-    
 }
 
 fn setup_test_level(
