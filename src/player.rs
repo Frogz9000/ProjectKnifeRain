@@ -39,14 +39,12 @@ impl Default for CameraSensitivity {
 }
 
 
-//spawn in player rigid body and collider
-//need component tag to query in camera
 fn setup_player(
     mut commands: Commands
 ){
     commands.spawn((
         Player,
-        Speed(4.0),
+        Speed(400.0),//adjust as needed for base speed, maybe have items or other modify later: 100 ~ 1m/s
         CameraSensitivity::default(),
         RigidBody::Dynamic,
         Collider::capsule_y(0.5, 0.3),//default player hitbox for now
@@ -62,6 +60,7 @@ fn update_player_keyboard_event(
     mut player: Query<(&Speed,&mut Velocity), With<Player>>,
     camera: Query<&Transform,With<PlayerCamera>>,
     input: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
 ){
     let (speed, mut velocity) = player.single_mut().unwrap();
     let camera_transform = camera.single().unwrap();
@@ -81,10 +80,16 @@ fn update_player_keyboard_event(
     //flatten vector (ignore y)
     direction.y = 0.0;
     let direction = direction.normalize_or_zero();
+    let mut current_speed = speed.0;
+    //check for sprint
+    if input.pressed(KeyCode::ShiftLeft){
+        current_speed = speed.0 * 2.0;//for now double speed when sprinting consider changing to var that can change from gear
+    }
+    //need mult delta time to get frame independance
     velocity.linvel = Vec3::new(
-        direction.x * speed.0,
+        direction.x * current_speed* time.delta_secs(),
         velocity.linvel.y,
-        direction.z * speed.0,
+        direction.z * current_speed * time.delta_secs(),
     )
 }
 
