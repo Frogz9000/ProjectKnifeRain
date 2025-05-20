@@ -62,34 +62,29 @@ fn update_player_keyboard_event(
     mut player: Query<(&Speed,&mut Velocity), With<Player>>,
     camera: Query<&Transform,With<PlayerCamera>>,
     input: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>,
 ){
     let (speed, mut velocity) = player.single_mut().unwrap();
     let camera_transform = camera.single().unwrap();
     let mut direction = Vec3::ZERO;
-
-    // Get camera forward/right, then flatten them (Y = 0)
-    let forward = camera_transform.forward().normalize();
-    let right = camera_transform.right().normalize();
-    let forward_flat = Vec3::new(forward.x, 0.0, forward.z).normalize_or_zero();
-    let right_flat = Vec3::new(right.x, 0.0, right.z).normalize_or_zero();
-
     if input.pressed(KeyCode::KeyW){
-        direction += forward_flat;
+        direction += *camera_transform.forward();
     }
     if input.pressed(KeyCode::KeyS){
-        direction -= forward_flat;
+        direction += *camera_transform.back();
     }
     if input.pressed(KeyCode::KeyA){
-        direction -= right_flat;
+        direction += *camera_transform.left();
     }
     if input.pressed(KeyCode::KeyD){
-        direction += right_flat;
+        direction += *camera_transform.right();
     }
+    //flatten vector (ignore y)
+    direction.y = 0.0;
+    let direction = direction.normalize_or_zero();
     velocity.linvel = Vec3::new(
-        direction.x * speed.0 * time.delta_secs(),
+        direction.x * speed.0,
         velocity.linvel.y,
-        direction.z * speed.0 * time.delta_secs(),
+        direction.z * speed.0,
     )
 }
 
