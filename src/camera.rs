@@ -1,5 +1,7 @@
 use bevy::window::CursorGrabMode;
+use bevy_rapier3d::{prelude::{Collider, KinematicCharacterController, RigidBody}};
 use std::f32::consts::FRAC_PI_2;
+use crate::player::*;
 use bevy::{
     input::{ mouse::AccumulatedMouseMotion}, prelude::*, render::view::RenderLayers
 };
@@ -10,14 +12,11 @@ impl Plugin for CameraControls{
         app.add_systems(Startup,(
             setup_camera,
         ));
-        app.add_systems(Update,(update_camera_mouse_event,update_camera_keyboard_event,update_pov,grab_mouse));
+        app.add_systems(Update,(update_camera_mouse_event,update_pov,grab_mouse));
     }
 }
-
 #[derive(Component)]
-struct PlayerBody;
-#[derive(Component)]
-struct PlayerCamera;
+pub struct PlayerCamera;
 #[derive(Component, Deref, DerefMut)]
 struct CameraSensitivity(Vec2);
 impl Default for CameraSensitivity {
@@ -35,7 +34,7 @@ fn setup_camera(
    commands.spawn((
         PlayerCamera,
         CameraSensitivity::default(),
-        Transform::from_xyz(25.0,2.0,25.0),
+        Transform::from_xyz(25.0,1.6,25.0),
         Visibility::default(),
    )).with_children(|parent| {
     //spawn world camera as child: mut fov 90 
@@ -64,25 +63,30 @@ fn setup_camera(
    });
 }
 
+//mouse events will be handled by camera, with change of yaw of player hitbox will update
+//but change in pitch will not update player so looking up/down does not tip player over
 fn update_camera_mouse_event(
     accum_mouse_motion: Res<AccumulatedMouseMotion>,
-    camera: Single<(&mut Transform, &CameraSensitivity), With<PlayerCamera>>
+    mut q_camera: Query<(&mut Transform, &CameraSensitivity), With<PlayerCamera>>,
+    mut q_yaw: Query<&mut Yaw, With<Player>>,
 ){
-    let (mut transform, camera_sensitivity) = camera.into_inner();
+    let (mut transform, camera_sensitivity) = q_camera.single_mut().unwrap();//should add option handling but just unwrap for now
+    let mut current_yaw = q_yaw.single_mut().unwrap();
     let delta = accum_mouse_motion.delta;
     if delta != Vec2::ZERO{ //if there was net mouse movement
-        let delta_yaw = -delta.x * camera_sensitivity.x;
+        current_yaw.0 -= delta.x * camera_sensitivity.x;
         let delta_pitch = -delta.y * camera_sensitivity.y;
 
         let (yaw,pitch,roll) = transform.rotation.to_euler(EulerRot::YXZ);
-        let yaw = yaw + delta_yaw;
+        
         //prevent camera from going fully up or down to prevent ambiguity of what forward is/reversing yaw
         const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
         let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
-        transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, roll)
+        transform.rotation = Quat::from_euler(EulerRot::YXZ, current_yaw.0, pitch, roll)
     }
 }
-
+//replace this with a query of player transform to get movement
+//move this function to player
 fn update_camera_keyboard_event(
     camera: Single<&mut Transform, With<PlayerCamera>>,
     input: Res<ButtonInput<KeyCode>>,
