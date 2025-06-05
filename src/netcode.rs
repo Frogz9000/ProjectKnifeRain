@@ -9,6 +9,9 @@ use crate::player::Player;
 
 pub struct NetcodePlugin;
 
+const HOST_ADDRESS: &str = "0.0.0.0:25565";
+const OTHER_ADDRESS: &str = "0.0.0.0:25565";
+
 
 impl Plugin for NetcodePlugin{
     fn build(&self, app: &mut App){
@@ -34,7 +37,7 @@ impl UdpSocketResource{
 }
 
 fn bind_socket(mut r_socket: ResMut<UdpSocketResource>){
-    let Some(socket) = UdpSocket::bind("0.0.0.0:25565").ok() else {return};
+    let Some(socket) = UdpSocket::bind(HOST_ADDRESS).ok() else {return};
     // socket.connect("24.265.234.220:25565");
     *r_socket.get_mut() = Some(socket);
     println!("{:?}", r_socket);
@@ -73,7 +76,7 @@ fn send_my_data(
     let mut out_buf: [u8; 24] = [0; 24];
     let Ok(_) = bincode::encode_into_slice(packet, &mut out_buf, bincode::config::standard()) else {return};
     //"24.265.234.220:25565"
-    let Ok(_) = socket.send_to(&out_buf, "0.0.0.0:25565") else {return};
+    let Ok(_) = socket.send_to(&out_buf, OTHER_ADDRESS) else {return};
 }
 
 fn update_other_player(
