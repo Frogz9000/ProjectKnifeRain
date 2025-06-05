@@ -14,7 +14,8 @@ fn main() {
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
-        .add_plugins((NetcodePlugin, PlayerPlugin, GenerateWorldPlugin))
+        .add_plugins(( PlayerPlugin, GenerateWorldPlugin))
+        //.add_plugins(NetcodePlugin)
         .add_systems(Update, grab_mouse)
         .run();
 }
