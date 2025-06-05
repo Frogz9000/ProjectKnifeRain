@@ -19,9 +19,9 @@ impl Plugin for PlayerPlugin{
     }
 }
 #[derive(Component)]
-struct Player;
+pub struct Player;
 #[derive(Component)]
-struct Speed(pub f32);
+pub struct Speed(pub f32);
 #[derive(Component, Deref, DerefMut)]
 struct CameraSensitivity(Vec2);
 impl Default for CameraSensitivity {

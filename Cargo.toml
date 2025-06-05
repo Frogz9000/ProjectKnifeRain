@@ -8,6 +8,8 @@ bevy = "0.16.0"
 bevy_rapier3d = "0.30.0"
 log = { version = "*", features = ["max_level_debug", "release_max_level_warn"] }
 rand = "0.9.1"
+bincode = "*"
+serde = "*"
 
 # Enable a small amount of optimization in the dev profile.
 [profile.dev]
