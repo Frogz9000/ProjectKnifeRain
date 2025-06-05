@@ -47,7 +47,7 @@ fn setup_player(
 ){
     commands.spawn((
         Player,
-        Speed(400.0),//adjust as needed for base speed, maybe have items or other modify later: 100 ~ 1m/s
+        Speed(5.0),//adjust as needed for base speed, maybe have items or other modify later: 100 ~ 1m/s
         CameraSensitivity::default(),
         RigidBody::Dynamic,
         Collider::capsule_y(0.5, 0.3),//default player hitbox for now
@@ -91,7 +91,7 @@ fn setup_player(
 fn update_player_keyboard_event(
     mut player: Query<(&Speed, &Transform,&mut Velocity), With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>,
+    // time: Res<Time>,
 ){
     let Ok((speed, transform, mut velocity)) = player.single_mut() else {return};
     let mut direction = Vec3::ZERO;
@@ -115,11 +115,11 @@ fn update_player_keyboard_event(
     if input.pressed(KeyCode::ShiftLeft){
         current_speed = speed.0 * 2.0;//for now double speed when sprinting consider changing to var that can change from gear
     }
-    //need mult delta time to get frame independance
+    //need mult delta time to get frame independance. --Sammy says no we dont and he comments it out !!!
     velocity.linvel = Vec3::new(
-        direction.x * current_speed* time.delta_secs(),
+        direction.x * current_speed, //* time.delta_secs(),
         velocity.linvel.y,
-        direction.z * current_speed * time.delta_secs(),
+        direction.z * current_speed, // * time.delta_secs(),
     )
 }
 
