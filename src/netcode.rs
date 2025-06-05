@@ -2,10 +2,10 @@ use std::net::UdpSocket;
 
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
-use bincode::{config::Configuration, error::DecodeError, Decode, Encode};
+use bincode::{config::Configuration, Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-use crate::player::{Player, Speed};
+use crate::player::Player;
 
 pub struct NetcodePlugin;
 
@@ -14,7 +14,7 @@ impl Plugin for NetcodePlugin{
     fn build(&self, app: &mut App){
         app
             .insert_resource(UdpSocketResource::default())
-            .add_systems(Startup, bind_socket)
+            .add_systems(Update, bind_socket)
             .add_systems(Startup, setup_other_player)
             .add_systems(Update, (send_my_data, update_other_player))
             ;
@@ -34,8 +34,8 @@ impl UdpSocketResource{
 }
 
 fn bind_socket(mut r_socket: ResMut<UdpSocketResource>){
-    let Some(socket) = UdpSocket::bind("127.0.0.1:25565").ok() else {return};
-    socket.connect("127.0.0.1:25565");
+    let Some(socket) = UdpSocket::bind("0.0.0.0:25565").ok() else {return};
+    // socket.connect("24.265.234.220:25565");
     *r_socket.get_mut() = Some(socket);
     println!("{:?}", r_socket);
 }
@@ -71,9 +71,9 @@ fn send_my_data(
     );
 
     let mut out_buf: [u8; 24] = [0; 24];
-    bincode::encode_into_slice(packet, &mut out_buf, bincode::config::standard());
-
-    socket.send(&out_buf);
+    let Ok(_) = bincode::encode_into_slice(packet, &mut out_buf, bincode::config::standard()) else {return};
+    //"24.265.234.220:25565"
+    let Ok(_) = socket.send_to(&out_buf, "0.0.0.0:25565") else {return};
 }
 
 fn update_other_player(
@@ -84,13 +84,13 @@ fn update_other_player(
 ){
     let Some(socket) = socket_input.get() else {return};
     let mut in_buf: [u8; 24] = [0; 24];
-    socket.recv(&mut in_buf);
+    let Ok(_) = socket.recv_from(&mut in_buf) else {return};
     let Ok((packet, _)) =
         bincode::decode_from_slice::<UpdatePacket, Configuration>(&in_buf, bincode::config::standard()) else {return};
 
     let Ok((mut transform, mut velocity)) = player.single_mut() else {return};
     velocity.linvel = packet.vel();
-    transform.translation = packet.pos();
+    transform.translation = packet.pos() + Vec3::new(5.0, 0.0, 0.0);
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode)]
