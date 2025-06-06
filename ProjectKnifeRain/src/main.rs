@@ -15,7 +15,7 @@ fn main() {
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(( PlayerPlugin, GenerateWorldPlugin))
-        // .add_plugins(NetcodePlugin)
+        .add_plugins(NetcodePlugin)
         .add_systems(Update, grab_mouse)
         .run();
 }

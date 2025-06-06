@@ -91,7 +91,6 @@ fn setup_player(
 fn update_player_keyboard_event(
     mut player: Query<(&Speed, &Transform,&mut Velocity), With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
-    // time: Res<Time>,
 ){
     let Ok((speed, transform, mut velocity)) = player.single_mut() else {return};
     let mut direction = Vec3::ZERO;
@@ -115,11 +114,10 @@ fn update_player_keyboard_event(
     if input.pressed(KeyCode::ShiftLeft){
         current_speed = speed.0 * 2.0;//for now double speed when sprinting consider changing to var that can change from gear
     }
-    //need mult delta time to get frame independance. --Sammy says no we dont and he comments it out !!!
     velocity.linvel = Vec3::new(
-        direction.x * current_speed, //* time.delta_secs(),
+        direction.x * current_speed,
         velocity.linvel.y,
-        direction.z * current_speed, // * time.delta_secs(),
+        direction.z * current_speed,
     )
 }
 
@@ -131,23 +129,25 @@ fn update_player_mouse_event(
     )>,
 ){
     let delta = accum_mouse_motion.delta;
-    if delta != Vec2::ZERO{ //if there was net mouse movement
-        let mut bind1 = query.p0();
-        let Ok((mut transform,camera_sensitivity)) = bind1.single_mut() else {return};
-        let delta_yaw = -delta.x * camera_sensitivity.x;
-        let delta_pitch = -delta.y * camera_sensitivity.y;
-        let (yaw,_,_) = transform.rotation.to_euler(EulerRot::YXZ);
-        //apply yaw change to hitbox
-        transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw+delta_yaw, 0.0, 0.0);
-        let mut bind2 = query.p1();
-        let Ok((mut cam_trans, mut camera_pitch)) = bind2.single_mut() else{return};
-        //update pitch for camera only to prevent strange physics interactions
-        //prevent camera from going fully up or down to prevent ambiguity of what forward is and then reversing yaw
-        const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
-        camera_pitch.0 = (camera_pitch.0 + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
-        //apply pitch changes to camera
-        cam_trans.rotation = Quat::from_euler(EulerRot::YXZ, 0.0, camera_pitch.0, 0.0);//this transform is relative to parent
-    }
+    if delta == Vec2::ZERO {return}
+
+    let mut bind1 = query.p0();
+    let Ok((mut transform,camera_sensitivity)) = bind1.single_mut() else {return};
+    let delta_yaw = -delta.x * camera_sensitivity.x;
+    let delta_pitch = -delta.y * camera_sensitivity.y;
+    let (yaw,_,_) = transform.rotation.to_euler(EulerRot::YXZ);
+    //apply yaw change to hitbox
+    transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw+delta_yaw, 0.0, 0.0);
+
+    
+    let mut bind2 = query.p1();
+    let Ok((mut cam_trans, mut camera_pitch)) = bind2.single_mut() else{return};
+    //update pitch for camera only to prevent strange physics interactions
+    //prevent camera from going fully up or down to prevent ambiguity of what forward is and then reversing yaw
+    const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
+    camera_pitch.0 = (camera_pitch.0 + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+    //apply pitch changes to camera
+    cam_trans.rotation = Quat::from_euler(EulerRot::YXZ, 0.0, camera_pitch.0, 0.0);//this transform is relative to parent
 }
 
 //for now FOV will be controlled with up/down arrow keys for development -> Plan to move to settings.rs when made

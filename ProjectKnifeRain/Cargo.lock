@@ -8,10 +8,9 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_rapier3d",
- "bincode",
  "log",
+ "multiplayer-lib",
  "rand 0.9.1",
- "serde",
 ]
 
 [[package]]
@@ -317,6 +316,7 @@ version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a5cd3b24a5adb7c7378da7b3eea47639877643d11b6b087fc8a8094f2528615"
 dependencies = [
+ "bevy_dylib",
  "bevy_internal",
 ]
 
@@ -533,6 +533,15 @@ dependencies = [
  "log",
  "serde",
  "sysinfo",
+]
+
+[[package]]
+name = "bevy_dylib"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "843c7ce266dfc46e49d01fbf9aa1829d33b70a1859b9ed6a526ac03070c52e97"
+dependencies = [
+ "bevy_internal",
 ]
 
 [[package]]
@@ -2778,6 +2787,15 @@ checksum = "3be647b768db090acb35d5ec5db2b0e1f1de11133ca123b9eacf5137868f892a"
 dependencies = [
  "adler2",
  "simd-adler32",
+]
+
+[[package]]
+name = "multiplayer-lib"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bincode",
+ "serde",
 ]
 
 [[package]]

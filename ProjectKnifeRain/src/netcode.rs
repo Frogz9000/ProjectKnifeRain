@@ -1,17 +1,15 @@
-use std::net::UdpSocket;
+use std::{net::UdpSocket, time::Duration};
 
-use bevy::prelude::*;
+use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
-use bincode::{config::Configuration, Decode, Encode};
-use serde::{Deserialize, Serialize};
+use multiplayer_lib::UpdatePacket;
 
 use crate::player::Player;
 
 pub struct NetcodePlugin;
 
 const HOST_ADDRESS: &str = "0.0.0.0:25565";
-const OTHER_ADDRESS: &str = "0.0.0.0:25565";
-
+const OTHER_ADDRESS: &str = "0.0.0.0:25566";
 
 impl Plugin for NetcodePlugin{
     fn build(&self, app: &mut App){
@@ -19,7 +17,9 @@ impl Plugin for NetcodePlugin{
             .insert_resource(UdpSocketResource::default())
             .add_systems(Update, bind_socket)
             .add_systems(Startup, setup_other_player)
-            .add_systems(Update, (send_my_data, update_other_player))
+            .add_systems(FixedUpdate, (send_pos_vel, update_other_player)
+                .run_if(on_timer(Duration::from_millis(100)))
+            )
             ;
     }
 }
@@ -38,9 +38,11 @@ impl UdpSocketResource{
 
 fn bind_socket(mut r_socket: ResMut<UdpSocketResource>){
     let Some(socket) = UdpSocket::bind(HOST_ADDRESS).ok() else {return};
-    // socket.connect("24.265.234.220:25565");
+    if let Err(_) = socket.set_nonblocking(true) {
+        if let Err(_) = socket.set_read_timeout(Some(Duration::from_nanos(1))) {return};
+        if let Err(_) = socket.set_write_timeout(Some(Duration::from_nanos(1))) {return};
+    }
     *r_socket.get_mut() = Some(socket);
-    println!("{:?}", r_socket);
 }
 
 
@@ -61,11 +63,11 @@ fn setup_other_player(
 }
 
 
-fn send_my_data(
+fn send_pos_vel(
     mut player: Query<(&Transform, &Velocity), With<Player>>,
     socket: Res<UdpSocketResource>
 ){
-    let Some(socket) = &socket.0 else {return};
+    let Some(socket) = socket.get() else {return};
     let Ok((transform, vel)) = player.single_mut() else {return};
 
     let packet = UpdatePacket::new(
@@ -73,45 +75,20 @@ fn send_my_data(
         vel.linvel
     );
 
-    let mut out_buf: [u8; 24] = [0; 24];
-    let Ok(_) = bincode::encode_into_slice(packet, &mut out_buf, bincode::config::standard()) else {return};
-    //"24.265.234.220:25565"
-    let Ok(_) = socket.send_to(&out_buf, OTHER_ADDRESS) else {return};
+    packet.send_udp_to(socket, OTHER_ADDRESS);
 }
 
 fn update_other_player(
     mut player: Query<(&mut Transform,&mut Velocity), With<OtherPlayer>>,
     socket_input: Res<UdpSocketResource>,
-    // input: Res<ButtonInput<KeyCode>>,
-    // time: Res<Time>,
 ){
     let Some(socket) = socket_input.get() else {return};
-    let mut in_buf: [u8; 24] = [0; 24];
-    let Ok(_) = socket.recv_from(&mut in_buf) else {return};
-    let Ok((packet, _)) =
-        bincode::decode_from_slice::<UpdatePacket, Configuration>(&in_buf, bincode::config::standard()) else {return};
-
     let Ok((mut transform, mut velocity)) = player.single_mut() else {return};
-    velocity.linvel = packet.vel();
-    transform.translation = packet.pos() + Vec3::new(5.0, 0.0, 0.0);
+
+    let Some(packet) = UpdatePacket::read_udp(socket) else {return};
+
+    velocity.linvel = packet.velocity();
+    transform.translation = packet.position();
 }
 
-#[derive(Serialize, Deserialize, Encode, Decode)]
-struct UpdatePacket{
-    position: (f32, f32, f32),
-    velocity: (f32, f32, f32)
-}
-impl UpdatePacket{
-    fn new(position: Vec3, velocity: Vec3)->Self{
-        Self {
-            position: (position.x, position.y, position.z),
-            velocity: (velocity.x, velocity.y, velocity.z)
-        }
-    }
-    fn vel(&self)->Vec3{
-        Vec3::new(self.velocity.0, self.velocity.1, self.velocity.2)
-    }
-    fn pos(&self)->Vec3{
-        Vec3::new(self.position.0, self.position.1, self.position.2)
-    }
-}
+

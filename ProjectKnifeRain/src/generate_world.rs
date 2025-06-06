@@ -1,6 +1,6 @@
 use bevy_rapier3d::{na::Point3, parry::shape::SharedShape, prelude::{Collider, RigidBody}};
 use rand::Rng;
-use bevy::{asset::RenderAssetUsages, prelude::*, render::mesh::{Indices, PrimitiveTopology}};
+use bevy::prelude::*;
 
 pub struct GenerateWorldPlugin;
 
