@@ -7,6 +7,7 @@ use multiplayer_lib::UpdatePacket;
 use crate::player::Player;
 
 pub struct NetcodePlugin;
+const NET_REFRESH_RATE_FPS: f32 = 30.0;
 
 const HOST_ADDRESS: &str = "0.0.0.0:25565";
 const OTHER_ADDRESS: &str = "0.0.0.0:25566";
@@ -18,7 +19,7 @@ impl Plugin for NetcodePlugin{
             .add_systems(Update, bind_socket)
             .add_systems(Startup, setup_other_player)
             .add_systems(FixedUpdate, (send_pos_vel, update_other_player)
-                .run_if(on_timer(Duration::from_millis(100)))
+                .run_if(on_timer(Duration::from_secs_f32(1.0 / NET_REFRESH_RATE_FPS)))
             )
             ;
     }
