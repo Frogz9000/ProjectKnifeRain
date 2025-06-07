@@ -4,45 +4,81 @@ use bincode::{config::Configuration, Decode, Encode};
 use serde::{Deserialize, Serialize};
 use bevy::math::Vec3;
 
-
-const UPDATE_PACKET_SIZE: usize = 24;
+const PACKET_SIZE: usize = 40;
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug)]
-pub struct UpdatePacket{
-    position: PacketVec3,
-    velocity: PacketVec3
+pub struct Packet{
+    id: PacketId,
+    packet_data: PacketData,
 }
-impl UpdatePacket{
-    pub fn new(position: impl Into<PacketVec3>, velocity: impl Into<PacketVec3>)->Self {
-        Self {position: position.into(), velocity: velocity.into()}
+
+pub type PacketId = usize;
+pub type NetObjectId = u16;
+
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug)]
+pub enum PacketData{
+    SpawnNetObject(NetObjectId),
+    DespawnNetObject(NetObjectId),
+    PositionVelocity(PositionVelocity),
+}
+impl Packet{
+    pub fn new(time_stamp: PacketId, packet_data: PacketData)->Self{
+        Self {id: time_stamp, packet_data }
     }
-    pub fn velocity(&self)->Vec3{
-        self.velocity.clone().into()
+    pub fn id(&self)->PacketId{
+        self.id
     }
-    pub fn position(&self)->Vec3{
-        self.position.clone().into()
+    pub fn data(&self)->&PacketData{
+        &self.packet_data
     }
-    pub fn serialize(&self)->Option<[u8; UPDATE_PACKET_SIZE]>{
-        let mut out_buf: [u8; UPDATE_PACKET_SIZE] = [0; UPDATE_PACKET_SIZE];
+    pub fn serialize(&self)->Option<[u8; PACKET_SIZE]>{
+        let mut out_buf: [u8; PACKET_SIZE] = [0; PACKET_SIZE];
         let Ok(_) = 
             bincode::encode_into_slice(self, &mut out_buf, bincode::config::standard())
             else {return None};
         return Some(out_buf);
     }
-    pub fn deserialize(data: &[u8; UPDATE_PACKET_SIZE])->Option<Self>{
+    pub fn deserialize(data: &[u8; PACKET_SIZE])->Option<Self>{
         let Ok((packet, _)) =
-            bincode::decode_from_slice::<UpdatePacket, Configuration>(data, bincode::config::standard())
+            bincode::decode_from_slice::<Self, Configuration>(data, bincode::config::standard())
             else {return None};
         return Some(packet);
     }
     pub fn read_udp(socket: &UdpSocket)->Option<Self>{
-        let mut in_buf: [u8; UPDATE_PACKET_SIZE] = [0; UPDATE_PACKET_SIZE];
+        let mut in_buf: [u8; PACKET_SIZE] = [0; PACKET_SIZE];
         let Ok(_) = socket.recv_from(&mut in_buf) else {return None};
         Self::deserialize(&in_buf)
     }
     pub fn send_udp_to(&self, socket: &UdpSocket, address: impl ToSocketAddrs){
         let Some(out_buf) = self.serialize() else {return};
         let Ok(_) = socket.send_to(&out_buf, address) else {return};
+    }
+}
+
+
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug)]
+pub struct PositionVelocity{
+    object: NetObjectId,
+    position: PacketVec3,
+    velocity: PacketVec3
+}
+impl PositionVelocity{
+    pub fn new(
+        object: NetObjectId,
+        position: impl Into<PacketVec3>,
+        velocity: impl Into<PacketVec3>
+    ) -> Self {
+        Self{
+            object,
+            position: position.into(),
+            velocity: velocity.into()
+        }
+    }
+    pub fn velocity(&self)->Vec3{
+        self.velocity.clone().into()
+    }
+    pub fn position(&self)->Vec3{
+        self.position.clone().into()
     }
 }
 

@@ -2,20 +2,21 @@ use std::{net::UdpSocket, time::Duration};
 
 use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
-use multiplayer_lib::UpdatePacket;
+use multiplayer_lib::{Packet, PacketData, PacketId, PositionVelocity};
 
 use crate::player::Player;
 
 pub struct NetcodePlugin;
 const NET_REFRESH_RATE_FPS: f32 = 30.0;
 
-const HOST_ADDRESS: &str = "0.0.0.0:25565";
-const OTHER_ADDRESS: &str = "0.0.0.0:25566";
+const HOST_ADDRESS: &str = "0.0.0.0:25566";
+const OTHER_ADDRESS: &str = "0.0.0.0:25565";
 
 impl Plugin for NetcodePlugin{
     fn build(&self, app: &mut App){
         app
             .insert_resource(UdpSocketResource::default())
+            .insert_resource(PacketIdFactory::default())
             .add_systems(Update, bind_socket)
             .add_systems(Startup, setup_other_player)
             .add_systems(FixedUpdate, (send_pos_vel, update_other_player)
@@ -26,8 +27,16 @@ impl Plugin for NetcodePlugin{
 }
 
 #[derive(Resource, Default, Debug)]
-pub struct UdpSocketResource(Option<UdpSocket>);
+pub struct PacketIdFactory(PacketId);
+impl PacketIdFactory{
+    fn read(&mut self)->PacketId{
+        self.0+=1;
+        self.0-1
+    }
+}
 
+#[derive(Resource, Default, Debug)]
+pub struct UdpSocketResource(Option<UdpSocket>);
 impl UdpSocketResource{
     fn get_mut(&mut self)->&mut Option<UdpSocket>{
         &mut self.0
@@ -66,15 +75,23 @@ fn setup_other_player(
 
 fn send_pos_vel(
     mut player: Query<(&Transform, &Velocity), With<Player>>,
-    socket: Res<UdpSocketResource>
+    socket: Res<UdpSocketResource>,
+    mut time_stamp: ResMut<PacketIdFactory>,
 ){
     let Some(socket) = socket.get() else {return};
     let Ok((transform, vel)) = player.single_mut() else {return};
 
-    let packet = UpdatePacket::new(
-        transform.translation,
-        vel.linvel
+    let packet = Packet::new(
+        time_stamp.read(),
+        PacketData::PositionVelocity(
+            PositionVelocity::new(
+                0,
+                transform.translation,
+                vel.linvel
+            )
+        )
     );
+
 
     packet.send_udp_to(socket, OTHER_ADDRESS);
 }
@@ -86,10 +103,13 @@ fn update_other_player(
     let Some(socket) = socket_input.get() else {return};
     let Ok((mut transform, mut velocity)) = player.single_mut() else {return};
 
-    let Some(packet) = UpdatePacket::read_udp(socket) else {return};
+    let Some(packet) = Packet::read_udp(socket) else {return};
 
-    velocity.linvel = packet.velocity();
-    transform.translation = packet.position();
+    match packet.data() {
+        PacketData::PositionVelocity(position_velocity) => {
+            velocity.linvel = position_velocity.velocity();
+            transform.translation = position_velocity.position();
+        },
+        _ => ()
+    }
 }
-
-
