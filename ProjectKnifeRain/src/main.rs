@@ -3,10 +3,14 @@ use bevy_rapier3d::{prelude::*};
 use player::PlayerPlugin;
 
 use crate::{generate_world::GenerateWorldPlugin, netcode::NetcodePlugin};
+use crate::player_class_actions::wizard::WizardPlugin;
+
 
 mod player;
 mod netcode;
 mod generate_world;
+mod player_class_actions;
+
 
 fn main() {
     App::new()
@@ -16,6 +20,7 @@ fn main() {
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(( PlayerPlugin, GenerateWorldPlugin))
         .add_plugins(NetcodePlugin)
+        .add_plugins(WizardPlugin)
         .add_systems(Update, grab_mouse)
         .run();
 }

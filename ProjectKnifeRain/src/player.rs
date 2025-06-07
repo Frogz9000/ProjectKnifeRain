@@ -2,7 +2,7 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use bevy::{
-    input::mouse::AccumulatedMouseMotion, prelude::*, render::view::RenderLayers
+    ecs::query, input::mouse::AccumulatedMouseMotion, prelude::*, render::view::RenderLayers
 };
 
 pub struct PlayerPlugin;
@@ -36,7 +36,21 @@ struct ViewModelCamera;
 #[derive(Component)]
 struct WorldCamera;
 #[derive(Component)]
+pub struct SpawnerMuzzle;//offset 'hitbox' to spawn projectiles from so they do not collide with player hitbox on spawn
+#[derive(Component)]
 struct CameraPitch(f32);//store camera pitch so player hitbox does not move on that axis
+
+pub struct SpawnInfo {
+    pub position: Vec3,
+    pub direction: Vec3,
+}
+
+impl SpawnInfo{
+pub fn to_transform(&self) -> Transform{
+    return Transform::from_translation(self.position)
+                     .looking_to(self.direction.normalize_or_zero(), Vec3::Y);
+}
+}
 
 const VIEWMODEL_RENDER_LAYER: usize = 1;
 const CAMERA_OFFSET_Z: f32 = 0.0;//apply to camera to lag behind hitbox for debug, set to 0 for first person
@@ -69,6 +83,9 @@ fn setup_player(
             fov: 90.0_f32.to_radians(),
             ..default()
             }),
+        )).with_child((
+            SpawnerMuzzle,
+            Transform::from_xyz(0.0, 0.0, 0.5),//move to be slightly in front of player camera
         ));
             //spawn view model camera as child: immut fov 70 may change to depending on view model generated
             controller.spawn((
@@ -148,6 +165,15 @@ fn update_player_mouse_event(
     camera_pitch.0 = (camera_pitch.0 + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
     //apply pitch changes to camera
     cam_trans.rotation = Quat::from_euler(EulerRot::YXZ, 0.0, camera_pitch.0, 0.0);//this transform is relative to parent
+}
+
+pub fn get_spawner_look_dir_and_pos(
+    query: Query<&GlobalTransform, With<SpawnerMuzzle>>,
+)->Option<SpawnInfo>{
+    let Ok(global_transform) = query.single() else {return None};
+    let pos = global_transform.translation();
+    let dir = global_transform.forward();
+    return Some(SpawnInfo{position: pos, direction: dir.into()});
 }
 
 //for now FOV will be controlled with up/down arrow keys for development -> Plan to move to settings.rs when made
