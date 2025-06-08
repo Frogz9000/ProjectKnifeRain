@@ -1,8 +1,8 @@
 use std::f32::consts::FRAC_PI_2;
 
-use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
+use bevy_rapier3d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use bevy::{
-    ecs::query, input::mouse::AccumulatedMouseMotion, prelude::*, render::view::RenderLayers
+    input::mouse::AccumulatedMouseMotion, prelude::*, render::view::RenderLayers
 };
 
 pub struct PlayerPlugin;
@@ -45,13 +45,6 @@ pub struct SpawnInfo {
     pub direction: Vec3,
 }
 
-impl SpawnInfo{
-pub fn to_transform(&self) -> Transform{
-    return Transform::from_translation(self.position)
-                     .looking_to(self.direction.normalize_or_zero(), Vec3::Y);
-}
-}
-
 const VIEWMODEL_RENDER_LAYER: usize = 1;
 const CAMERA_OFFSET_Z: f32 = 0.0;//apply to camera to lag behind hitbox for debug, set to 0 for first person
 const CAMERA_OFFSET_Y: f32 = 0.5;//height offset to have camera at a certain level of player hitbox, not bottom of hitbox
@@ -69,6 +62,7 @@ fn setup_player(
         Transform::from_xyz(0.0, 1.0, 0.0),
         Velocity::zero(),
         Visibility::default(),
+        ExternalImpulse::default(),
     )).with_children(|player| {
         player.spawn((
             CameraController,
@@ -85,7 +79,7 @@ fn setup_player(
             }),
         )).with_child((
             SpawnerMuzzle,
-            Transform::from_xyz(0.0, 0.0, 0.5),//move to be slightly in front of player camera
+            Transform::from_xyz(0.0, 0.0, -2.0),//move to be slightly in front of player camera
         ));
             //spawn view model camera as child: immut fov 70 may change to depending on view model generated
             controller.spawn((

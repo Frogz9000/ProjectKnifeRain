@@ -2,7 +2,7 @@ use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::CursorGra
 use bevy_rapier3d::{prelude::*};
 use player::PlayerPlugin;
 
-use crate::{generate_world::GenerateWorldPlugin, netcode::NetcodePlugin};
+use crate::{generate_world::GenerateWorldPlugin, netcode::NetcodePlugin, spells::SpellsPlugin};
 use crate::player_class_actions::wizard::WizardPlugin;
 
 
@@ -10,6 +10,7 @@ mod player;
 mod netcode;
 mod generate_world;
 mod player_class_actions;
+mod spells;
 
 
 fn main() {
@@ -21,6 +22,7 @@ fn main() {
         .add_plugins(( PlayerPlugin, GenerateWorldPlugin))
         .add_plugins(NetcodePlugin)
         .add_plugins(WizardPlugin)
+        .add_plugins(SpellsPlugin)
         .add_systems(Update, grab_mouse)
         .run();
 }

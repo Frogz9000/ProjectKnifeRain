@@ -1,7 +1,7 @@
 use std::{net::UdpSocket, time::Duration};
 
 use bevy::{prelude::*, time::common_conditions::on_timer};
-use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
+use bevy_rapier3d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use multiplayer_lib::{packet::position_velocity::PositionVelocity, Packet, PacketData, PacketId, PacketQueue};
 
 use crate::player::Player;
@@ -9,8 +9,8 @@ use crate::player::Player;
 pub struct NetcodePlugin;
 const NET_REFRESH_RATE_FPS: f32 = 30.0;
 
-const HOST_ADDRESS: &str = "0.0.0.0:25565";
-const OTHER_ADDRESS: &str = "0.0.0.0:25566";
+const HOST_ADDRESS: &str = "0.0.0.0:25566";
+const OTHER_ADDRESS: &str = "0.0.0.0:25565";
 
 impl Plugin for NetcodePlugin{
     fn build(&self, app: &mut App){
@@ -88,6 +88,7 @@ fn setup_other_player(
         Transform::from_xyz(10.0, 1.0, 0.0),
         Velocity::zero(),
         Visibility::default(),
+        ExternalImpulse::default(),
     ));
 }
 
