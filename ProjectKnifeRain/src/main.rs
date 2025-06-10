@@ -1,7 +1,7 @@
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::CursorGrabMode};
 use bevy_rapier3d::{prelude::*};
 use player::PlayerPlugin;
-
+use bevy::window::PresentMode;
 use crate::{generate_world::GenerateWorldPlugin, netcode::NetcodePlugin, spells::SpellsPlugin, ui::UIPlugin};
 use crate::player_class_actions::wizard::WizardPlugin;
 
@@ -16,7 +16,13 @@ mod ui;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin{
+            primary_window: Some(Window{
+                present_mode: PresentMode::Immediate,
+                ..default()
+            }),
+            ..default()
+        }))
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
