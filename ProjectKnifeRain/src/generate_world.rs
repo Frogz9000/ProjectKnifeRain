@@ -11,6 +11,9 @@ impl Plugin for GenerateWorldPlugin {
     }
 }
 
+#[derive(Component)]
+pub struct DebugStageCleanup;
+
 fn setup_test_level(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
