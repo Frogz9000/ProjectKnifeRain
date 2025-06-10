@@ -19,11 +19,24 @@ fn setup_text_ui(
     mut command: Commands,
     asset_server: Res<AssetServer>,
 ){
-
+    command.spawn((
+        Text::new("FPS: "),
+    )).with_child((
+        TextSpan::default(),
+        TextColor(GOLD.into()),
+        FrameText
+    ));
 }
 
 fn update_ui_text(
-
+    diagnostics: Res<DiagnosticsStore>,
+    mut frame_query: Query<&mut TextSpan, With<FrameText>>
 ){
-    
+    for mut span in &mut  frame_query{
+        if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS){
+            if let Some(frame_num) = fps.smoothed(){
+                **span = format!("{frame_num:.2}");
+            }
+        }
+    }
 }
