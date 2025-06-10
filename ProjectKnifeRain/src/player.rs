@@ -5,6 +5,9 @@ use bevy::{
     input::mouse::AccumulatedMouseMotion, prelude::*, render::view::RenderLayers
 };
 
+use crate::input_map::InputMap;
+
+
 pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin{
     fn build(&self, app: &mut App){
@@ -45,6 +48,19 @@ pub struct SpawnInfo {
     pub direction: Vec3,
 }
 
+#[derive(Component)]
+pub struct PlayerSettings{
+    pub input_map: InputMap,
+    //add stuff like run speed here to have it be variable
+}
+impl Default for PlayerSettings {
+    fn default() -> Self {
+        Self{
+            input_map: InputMap::default(),
+        }
+    }
+}
+
 const VIEWMODEL_RENDER_LAYER: usize = 1;
 const CAMERA_OFFSET_Z: f32 = 0.0;//apply to camera to lag behind hitbox for debug, set to 0 for first person
 const CAMERA_OFFSET_Y: f32 = 0.5;//height offset to have camera at a certain level of player hitbox, not bottom of hitbox
@@ -63,6 +79,7 @@ fn setup_player(
         Velocity::zero(),
         Visibility::default(),
         ExternalImpulse::default(),
+        PlayerSettings::default(),
     )).with_children(|player| {
         player.spawn((
             CameraController,
@@ -100,21 +117,21 @@ fn setup_player(
     });
 }
 fn update_player_keyboard_event(
-    mut player: Query<(&Speed, &Transform,&mut Velocity), With<Player>>,
+    mut player: Query<(&Speed, &Transform,&mut Velocity, &mut PlayerSettings), With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
 ){
-    let Ok((speed, transform, mut velocity)) = player.single_mut() else {return};
+    let Ok((speed, transform, mut velocity, mut settings)) = player.single_mut() else {return};
     let mut direction = Vec3::ZERO;
-    if input.pressed(KeyCode::KeyW){
+    if input.pressed(settings.input_map.key_forward){
         direction += *transform.forward();
     }
-    if input.pressed(KeyCode::KeyS){
+    if input.pressed(settings.input_map.key_backward){
         direction += *transform.back();
     }
-    if input.pressed(KeyCode::KeyA){
+    if input.pressed(settings.input_map.key_left){
         direction += *transform.left();
     }
-    if input.pressed(KeyCode::KeyD){
+    if input.pressed(settings.input_map.key_right){
         direction += *transform.right();
     }
     //flatten vector (ignore y)
@@ -122,7 +139,7 @@ fn update_player_keyboard_event(
     let direction = direction.normalize_or_zero();
     let mut current_speed = speed.0;
     //check for sprint
-    if input.pressed(KeyCode::ShiftLeft){
+    if input.pressed(settings.input_map.key_sprint){
         current_speed = speed.0 * 2.0;//for now double speed when sprinting consider changing to var that can change from gear
     }
     velocity.linvel = Vec3::new(

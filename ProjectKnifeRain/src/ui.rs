@@ -8,7 +8,7 @@ pub struct UIPlugin;
 impl Plugin for UIPlugin{
     fn build(&self, app: &mut App){
         app.add_systems(Startup, setup_text_ui);
-        app.add_systems(Update,(update_ui_text));
+        app.add_systems(Update, update_ui_text);
     }
 }
 
@@ -17,7 +17,7 @@ struct FrameText;
 
 fn setup_text_ui(
     mut command: Commands,
-    asset_server: Res<AssetServer>,
+    _asset_server: Res<AssetServer>,
 ){
     command.spawn((
         Text::new("FPS: "),

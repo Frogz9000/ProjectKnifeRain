@@ -80,7 +80,7 @@ fn fireball_collision_process(
     //loop thorugh all collision events to make sure a fireball was involved
     for event in collision_event.read(){
         if let CollisionEvent::Started(fireball_entity,hit_entity , _) = event {
-            let (fireball_entity, hit_entity) = if fireballs.get(*fireball_entity).is_ok() {
+            let (fireball_entity, _hit_entity) = if fireballs.get(*fireball_entity).is_ok() {
                 (*fireball_entity, *hit_entity)
             } else if fireballs.get(*hit_entity).is_ok() {
                 (*hit_entity, *fireball_entity)

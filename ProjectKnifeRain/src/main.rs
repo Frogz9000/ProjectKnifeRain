@@ -3,7 +3,7 @@ use bevy_rapier3d::{prelude::*};
 use player::PlayerPlugin;
 use bevy::window::PresentMode;
 use crate::{generate_world::GenerateWorldPlugin, netcode::NetcodePlugin, spells::SpellsPlugin, ui::UIPlugin};
-use crate::player_class_actions::wizard::WizardPlugin;
+use crate::{player_class_actions::wizard::WizardPlugin};
 
 
 mod player;
@@ -12,6 +12,7 @@ mod generate_world;
 mod player_class_actions;
 mod spells;
 mod ui;
+mod input_map;
 
 
 fn main() {
