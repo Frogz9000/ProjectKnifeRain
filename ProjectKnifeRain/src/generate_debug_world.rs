@@ -7,13 +7,13 @@ use bevy_rapier3d::{
 };
 use rand::Rng;
 
-pub struct GenerateDebugWorldPlugin;
+//pub struct GenerateDebugWorldPlugin;
 
-impl Plugin for GenerateDebugWorldPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_test_level);
-    }
-}
+//impl Plugin for GenerateDebugWorldPlugin {
+//    fn build(&self, app: &mut App) {
+//        app.add_systems(Startup, setup_test_level);
+//    }
+//}
 
 #[derive(Component)]
 pub struct DebugStageCleanup;
@@ -58,7 +58,9 @@ pub fn setup_test_level(
     ));
 }
 
-pub fn clean_up_debug_stage(mut command: Commands, query: Query<Entity, With<DebugStageCleanup>>) {
+pub fn clean_up_debug_stage() {
+    let mut command = Commands;
+    let query =  Query<Entity, With<DebugStageCleanup>>;
     cleanup_with_component(command, query);
 }
 
