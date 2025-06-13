@@ -2,9 +2,9 @@ use bevy_rapier3d::{na::Point3, parry::shape::SharedShape, prelude::{Collider, R
 use rand::Rng;
 use bevy::prelude::*;
 
-pub struct GenerateWorldPlugin;
+pub struct GenerateDebugWorldPlugin;
 
-impl Plugin for GenerateWorldPlugin {
+impl Plugin for GenerateDebugWorldPlugin {
     fn build(&self, app: &mut App){
         app
             .add_systems(Startup, setup_test_level);
