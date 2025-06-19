@@ -17,9 +17,28 @@ pub fn cleanup_with_component<T: Component>(mut command: Commands, q: Query<Enti
 pub struct WorldController;
 impl Plugin for WorldController {
     fn build(&self, app: &mut App) {
+        app.add_event::<SpawnPlayerEvent>();
+        app.add_event::<SpawnLevelEvent>();
         app.add_systems(Startup, start_world_manager);
     }
 }
+
+#[derive(Event)]
+pub struct SpawnPlayerEvent {
+    pub spawn_point: Vec3, //spawn point at x, y, z in level
+    pub look_dir: Vec3,    //Vec3 to look_at
+                           //eventually add saveData here to load inventory for player or maybe
+                           //handle that elsewhere
+}
+//to impliment later, ask sammy how he wants it
+//#[derive(Event)]
+//pub struct SpawnMuliplayerEvent {
+//send event to network section to spawn in other hitboxes
+//}
+#[derive(Event)]
+pub struct SpawnLevelEvent {}
+#[derive(Event)]
+pub struct CleanupLevelEvent {}
 
 fn start_world_manager(
     mut commands: Commands,

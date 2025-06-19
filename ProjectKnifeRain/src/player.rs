@@ -1,14 +1,12 @@
-use std::f32::consts::FRAC_PI_2;
-
+use crate::input_map::InputMap;
+use crate::world_controller;
 use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*, render::view::RenderLayers};
 use bevy_rapier3d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
-
-use crate::input_map::InputMap;
+use std::f32::consts::FRAC_PI_2;
 
 pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (setup_player,));
         app.add_systems(
             Update,
             (
@@ -36,6 +34,8 @@ struct CameraController;
 struct ViewModelCamera;
 #[derive(Component)]
 struct WorldCamera;
+//replace spawn muzzle by instead having spawned item event handler pass offset into object
+//or maybe make this hold a mut offset vec3 offset?
 #[derive(Component)]
 pub struct SpawnerMuzzle; //offset 'hitbox' to spawn projectiles from so they do not collide with player hitbox on spawn
 #[derive(Component)]
@@ -63,7 +63,7 @@ const VIEWMODEL_RENDER_LAYER: usize = 1;
 const CAMERA_OFFSET_Z: f32 = 0.0; //apply to camera to lag behind hitbox for debug, set to 0 for first person
 const CAMERA_OFFSET_Y: f32 = 0.5; //height offset to have camera at a certain level of player hitbox, not bottom of hitbox
 
-fn setup_player(mut commands: Commands) {
+fn handle_player_spawn(mut commands: Commands) {
     commands
         .spawn((
             Player,

@@ -9,7 +9,10 @@ pub struct SpellsPlugin;
 impl Plugin for SpellsPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<CastSpellEvent>();
-        app.add_systems(Update, (handle_fireball_event, fireball_collision_process));
+        app.add_systems(
+            FixedUpdate,
+            (handle_fireball_event, fireball_collision_process),
+        );
         //add other handlers here
     }
 }
