@@ -1,5 +1,4 @@
 use crate::input_map::InputMap;
-use crate::world_controller;
 use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*, render::view::RenderLayers};
 use bevy_rapier3d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use std::f32::consts::FRAC_PI_2;
@@ -63,7 +62,8 @@ const VIEWMODEL_RENDER_LAYER: usize = 1;
 const CAMERA_OFFSET_Z: f32 = 0.0; //apply to camera to lag behind hitbox for debug, set to 0 for first person
 const CAMERA_OFFSET_Y: f32 = 0.5; //height offset to have camera at a certain level of player hitbox, not bottom of hitbox
 
-fn handle_player_spawn(mut commands: Commands) {
+fn handle_player_spawn(mut commands: Commands, spawn_info: SpawnInfo) {
+    let SpawnInfo {position, direction} = spawn_info;
     commands
         .spawn((
             Player,
@@ -72,7 +72,7 @@ fn handle_player_spawn(mut commands: Commands) {
             RigidBody::Dynamic,
             Collider::capsule_y(0.5, 0.3), //default player hitbox for now
             LockedAxes::ROTATION_LOCKED, //prevent physics induced rotation, manual rotation done from input
-            Transform::from_xyz(0.0, 1.0, 0.0),
+            Transform::from_translation(position).looking_to(direction, Vec3::Y),
             Velocity::zero(),
             Visibility::default(),
             ExternalImpulse::default(),

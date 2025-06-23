@@ -1,18 +1,17 @@
 use crate::player_class_actions::wizard::WizardPlugin;
-use crate::world_controller::WorldController;
+use crate::level_management::world_controller::WorldController;
 use crate::{netcode::NetcodePlugin, spells::SpellsPlugin, ui::UIPlugin};
 use bevy::window::PresentMode;
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, window::CursorGrabMode};
 use bevy_rapier3d::prelude::*;
-use player::PlayerPlugin
-mod generate_debug_world;
+use player::PlayerPlugin;
 mod input_map;
 mod netcode;
 mod player;
 mod player_class_actions;
 mod spells;
 mod ui;
-mod world_controller;
+mod level_management;
 
 fn main() {
     App::new()

@@ -1,4 +1,4 @@
-use crate::world_controller::cleanup_with_component;
+use crate::world_controller::*;
 use bevy::{ecs::query, input::keyboard::KeyboardInput, prelude::*};
 use bevy_rapier3d::{
     na::Point3,
@@ -56,12 +56,6 @@ pub fn setup_test_level(
         RigidBody::Fixed,
         Transform::from_xyz(10.0, -1.0, 10.0),
     ));
-}
-
-pub fn clean_up_debug_stage() {
-    let mut command = Commands;
-    let query =  Query<Entity, With<DebugStageCleanup>>;
-    cleanup_with_component(command, query);
 }
 
 //generate a mesh and collider of a ramp. Apply transform after generation to rotate and move
