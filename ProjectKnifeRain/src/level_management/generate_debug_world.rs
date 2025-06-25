@@ -1,5 +1,5 @@
-use crate::world_controller::*;
-use bevy::{ecs::query, input::keyboard::KeyboardInput, prelude::*};
+use crate::{level_management::world_controller::*, player::SpawnInfo};
+use bevy::prelude::*;
 use bevy_rapier3d::{
     na::Point3,
     parry::shape::SharedShape,
@@ -7,22 +7,25 @@ use bevy_rapier3d::{
 };
 use rand::Rng;
 
-//pub struct GenerateDebugWorldPlugin;
-
-//impl Plugin for GenerateDebugWorldPlugin {
-//    fn build(&self, app: &mut App) {
-//        app.add_systems(Startup, setup_test_level);
-//    }
-//}
+pub struct GenerateDebugWorldPlugin;
+impl Plugin for GenerateDebugWorldPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(OnEnter(LevelState::DebugWorld), spawn_test_level);
+        app.add_systems(OnExit(LevelState::DebugWorld), (cleanup_with_component::<DebugStageCleanup>));
+    }
+}
 
 #[derive(Component)]
 pub struct DebugStageCleanup;
 
-pub fn setup_test_level(
+pub fn spawn_test_level(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut spawn_player_event: EventWriter<SpawnPlayerEvent>,
 ) {
+    let spawn_info = SpawnInfo { direction: Vec3::Z, position: Vec3 { x:10.0, y: 1.0, z: 0.0 }};
+    spawn_player_event.write(SpawnPlayerEvent{ spawn_info }); 
     commands.spawn(PointLight {
         intensity: 1000.0,
         ..Default::default()
@@ -32,6 +35,7 @@ pub fn setup_test_level(
     for i in 0..100 {
         for j in 0..=99 {
             commands.spawn((
+                DebugStageCleanup,
                 Mesh3d(mesh_handle.clone()),
                 MeshMaterial3d(materials.add(StandardMaterial {
                     base_color: Color::LinearRgba(LinearRgba {
@@ -47,11 +51,13 @@ pub fn setup_test_level(
         }
     }
     commands.spawn((
+        DebugStageCleanup,
         Collider::cuboid(50.0, 0.5, 50.0),
         RigidBody::Fixed,
         Transform::from_xyz(49.5, -1.0, 49.5),
     ));
     commands.spawn((
+        DebugStageCleanup,
         generate_ramp(5.0, 5.0, 5.0),
         RigidBody::Fixed,
         Transform::from_xyz(10.0, -1.0, 10.0),

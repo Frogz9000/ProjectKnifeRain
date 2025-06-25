@@ -1,4 +1,4 @@
-use crate::input_map::InputMap;
+use crate::{input_map::InputMap, level_management::world_controller::SpawnPlayerEvent};
 use bevy::{input::mouse::AccumulatedMouseMotion, prelude::*, render::view::RenderLayers};
 use bevy_rapier3d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use std::f32::consts::FRAC_PI_2;
@@ -62,8 +62,9 @@ const VIEWMODEL_RENDER_LAYER: usize = 1;
 const CAMERA_OFFSET_Z: f32 = 0.0; //apply to camera to lag behind hitbox for debug, set to 0 for first person
 const CAMERA_OFFSET_Y: f32 = 0.5; //height offset to have camera at a certain level of player hitbox, not bottom of hitbox
 
-fn handle_player_spawn(mut commands: Commands, spawn_info: SpawnInfo) {
-    let SpawnInfo {position, direction} = spawn_info;
+fn handle_player_spawn(mut commands: Commands, mut spawn_player_event: EventReader<SpawnPlayerEvent>,) {
+    for player in spawn_player_event.read(){
+    let SpawnInfo{ direction, position } = player.spawn_info;
     commands
         .spawn((
             Player,
@@ -117,6 +118,8 @@ fn handle_player_spawn(mut commands: Commands, spawn_info: SpawnInfo) {
                     //Add parent.spawn viewmodel mesh when ready
                 });
         });
+
+    }
 }
 fn update_player_keyboard_event(
     mut player: Query<(&Speed, &Transform, &mut Velocity, &mut PlayerSettings), With<Player>>,

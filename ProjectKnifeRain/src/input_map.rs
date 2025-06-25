@@ -10,7 +10,6 @@ pub struct InputMap {
     //player actions
     pub key_action1: MouseButton,
     //add more
-    pub key_reset_debug_stage: KeyCode,
 }
 
 impl Default for InputMap {
@@ -22,7 +21,6 @@ impl Default for InputMap {
             key_right: KeyCode::KeyD,
             key_sprint: KeyCode::ShiftLeft,
             key_action1: MouseButton::Left,
-            key_reset_debug_stage: KeyCode::KeyR,
         }
     }
 }
