@@ -1,4 +1,3 @@
-use std::default;
 use crate::{level_management::generate_debug_world::GenerateDebugWorldPlugin, player::SpawnInfo};
 use bevy::ecs::{
     component::Component,
@@ -7,7 +6,6 @@ use bevy::ecs::{
     system::{Commands, Query},
 };
 use bevy::prelude::*;
-use bevy_rapier3d::parry::query::{self, point::PointCompositeShapeProjBestFirstVisitor};
 pub fn cleanup_with_component<T: Component>(mut command: Commands, q: Query<Entity, With<T>>) {
     for e in q.iter() {
         command.entity(e).despawn();

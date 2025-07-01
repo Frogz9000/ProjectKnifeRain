@@ -12,6 +12,7 @@ impl Plugin for PlayerPlugin {
                 update_player_keyboard_event,
                 update_player_mouse_event,
                 update_pov,
+                handle_player_spawn,
             ),
         );
     }

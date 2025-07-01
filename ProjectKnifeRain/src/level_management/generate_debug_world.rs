@@ -1,4 +1,4 @@
-use crate::{level_management::world_controller::*, player::SpawnInfo};
+use crate::{level_management::world_controller::*, player::{Player, SpawnInfo}};
 use bevy::prelude::*;
 use bevy_rapier3d::{
     na::Point3,
@@ -11,7 +11,7 @@ pub struct GenerateDebugWorldPlugin;
 impl Plugin for GenerateDebugWorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(LevelState::DebugWorld), spawn_test_level);
-        app.add_systems(OnExit(LevelState::DebugWorld), (cleanup_with_component::<DebugStageCleanup>));
+        app.add_systems(OnExit(LevelState::DebugWorld), (cleanup_with_component::<DebugStageCleanup>,cleanup_with_component::<Player>));
     }
 }
 
